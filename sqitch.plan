@@ -1,0 +1,6 @@
+%syntax-version=1.0.0
+%project=marketplace
+%uri=https://github.com/urielaero/sqitch-marketplace
+
+sellers 2019-03-21T19:48:03Z Uriel Tzel <aero.uriel@gmail.com> # add sellers table
+insert_data 2019-03-22T03:02:20Z Uriel Tzel <aero.uriel@gmail.com> # insert data and run verify
