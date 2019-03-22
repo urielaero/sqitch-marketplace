@@ -27,6 +27,9 @@ CREATE TABLE purchases(
     inserted_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
 );
 
+CREATE INDEX ON purchases (seller_id) WHERE inbalance = FALSE;
+CREATE INDEX ON purchases (seller_id) WHERE refund = TRUE AND rebalance = FALSE;
+
 CREATE TABLE seller_pays(
     id BIGSERIAL PRIMARY KEY,
     seller_id int NOT NULL REFERENCES sellers(id),
@@ -48,20 +51,18 @@ CREATE OR REPLACE FUNCTION seller_last_pay(s_id INT) RETURNS DATE AS $$
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION run_seller_pay(s_id INT) RETURNS SETOF seller_pays AS $$
-    --- run under transaction
+    --- transaction !!!
     DECLARE
         purchase_val NUMERIC(9, 3);
         refund_val NUMERIC(9, 3);
         seller sellers%ROWTYPE;
         last_pay seller_pays%ROWTYPE;
         last_pay_date DATE;
-        until_date DATE;
     BEGIN
         SELECT * INTO seller FROM sellers WHERE id = s_id;
         SELECT * INTO last_pay FROM seller_pays WHERE seller_id = s_id ORDER BY inserted_at DESC LIMIT 1;
         last_pay_date := seller_last_pay(s_id);
 
-        -- 21 marzo - 10 = 11 marzo <= 21 marzo
         IF (DATE(NOW()) - seller.days_for_pay) <= last_pay_date THEN
             RETURN NEXT last_pay;
             RETURN;
